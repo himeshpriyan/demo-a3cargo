@@ -23,9 +23,11 @@ import { RegulatoryDeskPage } from './pages/RegulatoryDeskPage';
 import { PortDisbursementPage } from './pages/PortDisbursementPage';
 import { DocumentVaultPage } from './pages/DocumentVaultPage';
 import { RateEstimatorPage } from './pages/RateEstimatorPage';
-import { AuthProvider } from './context/AuthContext';
+import { LoginPage } from './pages/LoginPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-export function App() {
+function MainPortal() {
+  const { isAuthenticated } = useAuth();
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<string>('shipments');
   const [selectedShipmentId, setSelectedShipmentId] = useState<number | null>(null);
@@ -160,9 +162,12 @@ export function App() {
     setActiveTab('shipment_detail');
   };
 
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
       {/* Top Dropdown Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -408,6 +413,13 @@ export function App() {
         )}
       </main>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <MainPortal />
     </AuthProvider>
   );
 }

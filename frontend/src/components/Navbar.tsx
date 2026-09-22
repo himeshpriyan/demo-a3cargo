@@ -17,7 +17,8 @@ import {
   Receipt,
   FolderArchive,
   Calculator,
-  UserCheck
+  UserCheck,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../types/auth';
@@ -37,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddVendor,
   onOpenAddCustomer
 }) => {
-  const { currentRole, user, allPersonas, switchRole } = useAuth();
+  const { currentRole, user, allPersonas, switchRole, logout } = useAuth();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navRef = useRef<HTMLDivElement>(null);
@@ -436,6 +437,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                       );
                     })}
                   </div>
+                </div>
+
+                {/* Sign Out Button */}
+                <div className="pt-2 border-t border-[#253858]">
+                  <button
+                    onClick={() => {
+                      logout();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out (Switch Account)</span>
+                  </button>
                 </div>
               </div>
             )}
