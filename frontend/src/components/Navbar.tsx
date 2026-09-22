@@ -12,8 +12,15 @@ import {
   Search,
   HelpCircle,
   Settings,
-  Boxes
+  Boxes,
+  ShieldCheck,
+  Receipt,
+  FolderArchive,
+  Calculator,
+  UserCheck
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { type UserRole } from '../types/auth';
 
 interface NavbarProps {
   activeTab: string;
@@ -30,6 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddVendor,
   onOpenAddCustomer
 }) => {
+  const { currentRole, user, allPersonas, switchRole } = useAuth();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navRef = useRef<HTMLDivElement>(null);
@@ -199,10 +207,84 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Boxes className="w-3.5 h-3.5 opacity-80" />
-              <span>Item Catalog</span>
+              <span>Catalog</span>
             </button>
 
-            {/* 5. TARIFF DATABASE */}
+            {/* 5. OPERATIONS & FREIGHT MODULES DROPDOWN */}
+            <div className="relative">
+              <button
+                onClick={() => toggleMenu('operations')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  activeTab === 'logistics' || activeTab === 'regulatory' || activeTab === 'disbursement' || activeTab === 'vault' || activeTab === 'rate_estimator' || openMenu === 'operations'
+                    ? 'bg-[#172B4D] text-[#4C9AFF]'
+                    : 'text-[#DEEBFF] hover:bg-[#172B4D]/60 hover:text-white'
+                }`}
+              >
+                <span>Freight Desk</span>
+                <ChevronDown className={`w-3.5 h-3.5 opacity-70 transition-transform ${openMenu === 'operations' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openMenu === 'operations' && (
+                <div className="absolute left-0 mt-1.5 w-64 bg-[#091E42] border border-[#253858] rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
+                  <button
+                    onClick={() => handleMenuClick(() => setActiveTab('logistics'))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#DEEBFF] hover:bg-[#172B4D] rounded-lg transition-all cursor-pointer text-left"
+                  >
+                    <Ship className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <div className="font-bold text-white">Container & Vessel Tracking</div>
+                      <div className="text-[10px] text-slate-400">B/L, Feeder Milestones, Seals</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleMenuClick(() => setActiveTab('regulatory'))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#DEEBFF] hover:bg-[#172B4D] rounded-lg transition-all cursor-pointer text-left"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <div className="font-bold text-white">Customs & CUSDEC Desk</div>
+                      <div className="text-[10px] text-slate-400">Channels G/Y/R, SLSI Testing</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleMenuClick(() => setActiveTab('disbursement'))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#DEEBFF] hover:bg-[#172B4D] rounded-lg transition-all cursor-pointer text-left"
+                  >
+                    <Receipt className="w-4 h-4 text-teal-400" />
+                    <div>
+                      <div className="font-bold text-white">Port Dues & Demurrage (DA)</div>
+                      <div className="text-[10px] text-slate-400">Wharfage & Free Days Clock</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleMenuClick(() => setActiveTab('vault'))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#DEEBFF] hover:bg-[#172B4D] rounded-lg transition-all cursor-pointer text-left"
+                  >
+                    <FolderArchive className="w-4 h-4 text-purple-400" />
+                    <div>
+                      <div className="font-bold text-white">Document E-Vault</div>
+                      <div className="text-[10px] text-slate-400">Digital Dossier Repository</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleMenuClick(() => setActiveTab('rate_estimator'))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#DEEBFF] hover:bg-[#172B4D] rounded-lg transition-all cursor-pointer text-left"
+                  >
+                    <Calculator className="w-4 h-4 text-cyan-400" />
+                    <div>
+                      <div className="font-bold text-white">Rate Cards & Estimator</div>
+                      <div className="text-[10px] text-slate-400">Liner Freights & Landing Cost</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 6. TARIFF DATABASE */}
             <button
               onClick={() => setActiveTab('tariff')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
@@ -212,10 +294,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Database className="w-3.5 h-3.5 opacity-80" />
-              <span>Tariff Explorer</span>
+              <span>Tariff Schedule</span>
             </button>
 
-            {/* 6. ANALYTICS */}
+            {/* 7. ANALYTICS */}
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
@@ -278,40 +360,81 @@ export const Navbar: React.FC<NavbarProps> = ({
             <HelpCircle className="w-4 h-4" />
           </button>
 
-          {/* User Profile Avatar */}
+          {/* Active Role Persona Switcher Pill */}
           <div className="relative">
             <button
               onClick={() => toggleMenu('profile')}
-              className="w-7 h-7 rounded-full bg-[#0052CC] text-white font-bold text-[11px] flex items-center justify-center ring-2 ring-[#4C9AFF]/30 hover:ring-[#4C9AFF] transition-all cursor-pointer"
-              title="A3 Express Admin Profile"
+              className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#172B4D] hover:bg-[#253858] border border-[#253858] hover:border-[#4C9AFF] transition-all cursor-pointer select-none"
+              title="Click to Switch Role Persona"
             >
-              AS
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] ${user.badgeColor}`}>
+                {user.avatar}
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-[11px] font-bold text-white leading-tight flex items-center gap-1">
+                  <span>{user.name}</span>
+                </div>
+                <div className="text-[9px] text-[#4C9AFF] font-mono leading-none">
+                  {user.role}
+                </div>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${openMenu === 'profile' ? 'rotate-180' : ''}`} />
             </button>
 
             {openMenu === 'profile' && (
-              <div className="absolute right-0 mt-1.5 w-64 bg-[#091E42] border border-[#253858] rounded-xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100 space-y-3">
+              <div className="absolute right-0 mt-1.5 w-80 bg-[#091E42] border border-[#253858] rounded-xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100 space-y-3">
+                {/* Active Persona Header */}
                 <div className="flex items-center gap-3 pb-3 border-b border-[#253858]">
-                  <div className="w-9 h-9 rounded-xl bg-[#0C66E4] text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
-                    AS
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${user.badgeColor}`}>
+                    {user.avatar}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">A3 Cargo Administrator</div>
-                    <div className="text-[10px] text-slate-400">admin@a3expresscargo.com</div>
+                    <div className="text-xs font-bold text-white">{user.name}</div>
+                    <div className="text-[11px] text-[#4C9AFF] font-semibold">{user.title}</div>
+                    <div className="text-[10px] text-slate-400">{user.email}</div>
                   </div>
                 </div>
 
-                <div className="space-y-1 text-xs font-medium">
-                  <div className="flex justify-between py-1 text-slate-300">
-                    <span>Role:</span>
-                    <span className="font-bold text-[#4C9AFF]">Operations Admin</span>
+                {/* Role Switcher Section */}
+                <div>
+                  <div className="text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider mb-1.5 flex items-center gap-1">
+                    <UserCheck className="w-3.5 h-3.5 text-[#4C9AFF]" />
+                    <span>Switch Role Persona (Demo Simulator)</span>
                   </div>
-                  <div className="flex justify-between py-1 text-slate-300">
-                    <span>Region:</span>
-                    <span className="font-bold text-emerald-400">India &bull; Sri Lanka</span>
-                  </div>
-                  <div className="flex justify-between py-1 text-slate-300">
-                    <span>Platform:</span>
-                    <span className="font-bold text-amber-400">Atlassian Cloud ADS</span>
+
+                  <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
+                    {(Object.keys(allPersonas) as UserRole[]).map(rKey => {
+                      const persona = allPersonas[rKey];
+                      const isActive = currentRole === rKey;
+                      return (
+                        <button
+                          key={rKey}
+                          onClick={() => {
+                            switchRole(rKey);
+                            setOpenMenu(null);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all cursor-pointer ${
+                            isActive
+                              ? 'bg-[#172B4D] border border-[#4C9AFF] text-white'
+                              : 'hover:bg-[#172B4D]/60 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] ${persona.badgeColor}`}>
+                              {persona.avatar}
+                            </span>
+                            <div>
+                              <div className="text-xs font-bold">{persona.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate max-w-[170px]">{persona.title}</div>
+                            </div>
+                          </div>
+
+                          {isActive && (
+                            <span className="w-2 h-2 rounded-full bg-[#4C9AFF] shadow-xs" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

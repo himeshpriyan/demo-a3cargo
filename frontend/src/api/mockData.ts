@@ -10,6 +10,14 @@ import type {
   PhysicalReceivingVerification,
   ShipmentPackingList,
   QuotationHistoryLog,
+  ContainerTrackingRecord,
+  CusdecDeclaration,
+  SlsiInspection,
+  QuarantineRecord,
+  PortDisbursementAccount,
+  DemurrageClock,
+  VaultDocument,
+  FreightRateCard,
 } from '../types';
 
 export const STORAGE_KEYS = {
@@ -25,6 +33,14 @@ export const STORAGE_KEYS = {
   PACKING_LISTS: 'a3_packing_lists_v1',
   QUOTATION_HISTORY: 'a3_quotation_history_v1',
   NEXT_SHIPMENT_SEQ: 'a3_next_shipment_seq_v1',
+  CONTAINERS: 'a3_containers_v1',
+  CUSDEC: 'a3_cusdec_v1',
+  SLSI: 'a3_slsi_v1',
+  QUARANTINE: 'a3_quarantine_v1',
+  PORT_DISBURSEMENTS: 'a3_port_disbursements_v1',
+  DEMURRAGE_CLOCKS: 'a3_demurrage_clocks_v1',
+  VAULT_DOCUMENTS: 'a3_vault_documents_v1',
+  RATE_CARDS: 'a3_rate_cards_v1',
 };
 
 // ── Initial Seed Chapters ──────────────────────────────────────────────────
@@ -1268,7 +1284,333 @@ function setStored<T>(key: string, val: T): void {
   }
 }
 
-export class MockStorage {
+// ── Initial Seed Containers & Logistics ─────────────────────────────────────
+export const INITIAL_CONTAINERS: ContainerTrackingRecord[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    container_no: 'MSKU-7291048',
+    container_size: '40FT_HC',
+    seal_no: 'SL-CUS-882910',
+    carrier_name: 'Maersk Line',
+    vessel_name: 'MV TIGER CORAL',
+    voyage_no: 'V.2604S',
+    master_bl_no: 'MAEU291048820',
+    house_bl_no: 'A3-HBL-CMB-00104',
+    port_of_loading: 'Tuticorin Port, India (IN TUC)',
+    port_of_discharge: 'Colombo Port, Sri Lanka (LK CMB)',
+    etd: '2026-09-18T14:00:00Z',
+    eta: '2026-09-23T18:00:00Z',
+    berth_terminal: 'SAGT (South Asia Gateway Terminals)',
+    current_milestone: 'ARRIVED_COLOMBO',
+    gross_weight_kg: 24500,
+    cbm_volume: 62.4,
+    updated_at: '2026-09-22T08:30:00Z',
+    milestones: [
+      { step: 'BOOKED', label: 'Booking Confirmed', location: 'Tuticorin Liner Desk', planned_date: '2026-09-15', actual_date: '2026-09-15', is_completed: true, notes: '40ft HC equipment released' },
+      { step: 'GATED_IN', label: 'Container Gated In', location: 'Tuticorin CFS Yard', planned_date: '2026-09-17', actual_date: '2026-09-17', is_completed: true, notes: 'Cargo stuffed & export customs cleared' },
+      { step: 'SAILED_POL', label: 'Vessel Sailed', location: 'Tuticorin Port Berth 3', planned_date: '2026-09-18', actual_date: '2026-09-18', is_completed: true, notes: 'MV TIGER CORAL departed' },
+      { step: 'IN_TRANSIT', label: 'In Transit across Palk Bay', location: 'Gulf of Mannar', planned_date: '2026-09-19', actual_date: '2026-09-19', is_completed: true, notes: 'Smooth passage, on-time feeder' },
+      { step: 'ARRIVED_COLOMBO', label: 'Vessel Arrived in Outer Anchorage', location: 'Colombo Port Waters', planned_date: '2026-09-22', actual_date: '2026-09-22', is_completed: true, notes: 'Pilot onboard, awaiting SAGT berth' },
+      { step: 'BERTHED', label: 'Container Discharged to Wharf', location: 'SAGT Terminal Wharf', planned_date: '2026-09-23', is_completed: false, notes: 'Crane unlashing scheduled' },
+      { step: 'CUSTOMS_EXAM', label: 'Customs Examination & SLSI', location: 'Colombo CFS Inspection Bay', planned_date: '2026-09-24', is_completed: false, notes: 'Yellow channel document audit' },
+      { step: 'CLEARED', label: 'Customs Out of Charge (OOC)', location: 'Colombo Customs Long Room', planned_date: '2026-09-24', is_completed: false, notes: 'Pending duty warrant' },
+      { step: 'DESTUFFED', label: 'LCL De-Stuffing & Consignee Sorting', location: 'A3 Express Bonded CFS', planned_date: '2026-09-25', is_completed: false },
+      { step: 'DELIVERED', label: 'Gate Pass & Final Truck Dispatch', location: 'Importer Warehouses, Colombo', planned_date: '2026-09-26', is_completed: false }
+    ]
+  },
+  {
+    id: 2,
+    shipment_id: 2,
+    shipment_no: 'AEC/1002/2026-27',
+    container_no: 'TGHU-8192031',
+    container_size: '20FT_STD',
+    seal_no: 'SL-CUS-991024',
+    carrier_name: 'Bengal Tiger Line (BTL)',
+    vessel_name: 'BTL GLORY',
+    voyage_no: 'V.104B',
+    master_bl_no: 'BTL99210041',
+    house_bl_no: 'A3-HBL-CMB-00105',
+    port_of_loading: 'Chennai Port, India (IN MAA)',
+    port_of_discharge: 'Colombo Port, Sri Lanka (LK CMB)',
+    etd: '2026-09-24T10:00:00Z',
+    eta: '2026-09-27T16:00:00Z',
+    berth_terminal: 'JCT (Jaye Container Terminal)',
+    current_milestone: 'GATED_IN',
+    gross_weight_kg: 18200,
+    cbm_volume: 29.8,
+    updated_at: '2026-09-22T09:00:00Z',
+    milestones: [
+      { step: 'BOOKED', label: 'Booking Confirmed', location: 'Chennai BTL Office', planned_date: '2026-09-20', actual_date: '2026-09-20', is_completed: true },
+      { step: 'GATED_IN', label: 'Container Gated In', location: 'Chennai Port CFS', planned_date: '2026-09-22', actual_date: '2026-09-22', is_completed: true },
+      { step: 'SAILED_POL', label: 'Vessel Sailed', location: 'Chennai Port', planned_date: '2026-09-24', is_completed: false },
+      { step: 'IN_TRANSIT', label: 'In Maritime Transit', location: 'Bay of Bengal', planned_date: '2026-09-25', is_completed: false },
+      { step: 'ARRIVED_COLOMBO', label: 'Vessel Arrived', location: 'Colombo Port', planned_date: '2026-09-27', is_completed: false },
+      { step: 'BERTHED', label: 'Container Discharged', location: 'JCT Terminal', planned_date: '2026-09-27', is_completed: false },
+      { step: 'CUSTOMS_EXAM', label: 'Customs Examination', location: 'Colombo Customs Bay', planned_date: '2026-09-28', is_completed: false },
+      { step: 'CLEARED', label: 'Customs Cleared', location: 'Colombo Long Room', planned_date: '2026-09-28', is_completed: false },
+      { step: 'DESTUFFED', label: 'De-Stuffed & Sorted', location: 'A3 Colombo CFS', planned_date: '2026-09-29', is_completed: false },
+      { step: 'DELIVERED', label: 'Delivered to Consignee', location: 'Colombo / Gampaha', planned_date: '2026-09-30', is_completed: false }
+    ]
+  }
+];
+
+// ── Initial Seed CUSDEC Declarations ────────────────────────────────────────
+export const INITIAL_CUSDEC: CusdecDeclaration[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    cusdec_office_code: 'CMB-HQ',
+    declaration_no: 'C-2026/89412',
+    assessment_notice_no: 'ASN-2026-4401',
+    manifest_no: 'MNF-CMB-0941',
+    cpc_code: '4000 (Direct Home Consumption)',
+    importer_tin_vat: 'TIN-109284102 / VAT-99214',
+    declarant_cha_license: 'CHA-A3-EXP-088',
+    channel: 'YELLOW',
+    assessed_duty_lkr: 1450250.0,
+    duty_payment_receipt_no: 'RCT-BOC-992014',
+    duty_paid_date: '2026-09-21',
+    is_warranted: true,
+    notes: 'Yellow Channel assigned. Commodity document audit for Ghee and Basmati Rice complete.',
+    updated_at: '2026-09-22T07:15:00Z'
+  },
+  {
+    id: 2,
+    shipment_id: 2,
+    shipment_no: 'AEC/1002/2026-27',
+    cusdec_office_code: 'CMB-HQ',
+    declaration_no: 'C-2026/91004',
+    assessment_notice_no: 'ASN-2026-4488',
+    manifest_no: 'MNF-CMB-0982',
+    cpc_code: '4000 (Direct Home Consumption)',
+    importer_tin_vat: 'TIN-208174921 / VAT-11029',
+    declarant_cha_license: 'CHA-A3-EXP-088',
+    channel: 'GREEN',
+    assessed_duty_lkr: 890400.0,
+    is_warranted: false,
+    notes: 'Green Channel fast-track clearance eligible (AEO authorized importer).',
+    updated_at: '2026-09-22T08:00:00Z'
+  }
+];
+
+// ── Initial Seed SLSI Inspections ───────────────────────────────────────────
+export const INITIAL_SLSI: SlsiInspection[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    sample_drawn_date: '2026-09-21',
+    slsi_file_ref: 'SLSI/IMP/2026/09/GHEE-84',
+    product_name: 'Pure Cow Milk Ghee',
+    standards_specification: 'SLS 102:2018 (Specifications for Ghee / Butter Oil)',
+    lab_test_status: 'STANDARDS_CONFORMED',
+    permit_no: 'SLSI-PERMIT-2026-9921',
+    clearance_date: '2026-09-22'
+  },
+  {
+    id: 2,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    sample_drawn_date: '2026-09-21',
+    slsi_file_ref: 'SLSI/IMP/2026/09/RICE-19',
+    product_name: 'Indian Basmati Rice Premium',
+    standards_specification: 'SLS 528:2020 (Milled Rice Standards)',
+    lab_test_status: 'TESTING_IN_LAB',
+    permit_no: 'SLSI-PENDING-4402'
+  }
+];
+
+// ── Initial Seed Quarantine Records ────────────────────────────────────────
+export const INITIAL_QUARANTINE: QuarantineRecord[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    phyto_certificate_no: 'PSC-IND-TN-2026-88192',
+    fumigation_cert_date: '2026-09-16',
+    npqs_officer_name: 'Dr. Wickramasinghe (NPQS Colombo)',
+    inspection_status: 'CLEARED',
+    release_order_no: 'NPQS/REL/2026/09/441'
+  }
+];
+
+// ── Initial Seed Port Disbursements ─────────────────────────────────────────
+export const INITIAL_PORT_DISBURSEMENTS: PortDisbursementAccount[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    terminal_operator: 'SAGT',
+    items: [
+      { id: 101, category: 'WHARFAGE', description: 'SLPA Container Wharfage Dues (40ft Laden)', amount_lkr: 38500.0, is_billed_to_customer: true, receipt_ref: 'SLPA-WH-0921' },
+      { id: 102, category: 'THC', description: 'Terminal Handling Charges (THC) - SAGT Port', amount_lkr: 72000.0, is_billed_to_customer: true, receipt_ref: 'SAGT-THC-8810' },
+      { id: 103, category: 'STEVEDORING', description: 'Crane & Unlashing Stevedoring Levy', amount_lkr: 14500.0, is_billed_to_customer: true, receipt_ref: 'STV-CMB-104' },
+      { id: 104, category: 'GATE_PASS', description: 'SLPA Port Security & Wharf Gate Pass', amount_lkr: 4500.0, is_billed_to_customer: true, receipt_ref: 'GP-99120' },
+      { id: 105, category: 'EDI_ENTRY', description: 'Asycuda World Electronic Entry Fee', amount_lkr: 3500.0, is_billed_to_customer: true, receipt_ref: 'ASY-CMB-841' },
+      { id: 106, category: 'AGENCY_FEE', description: 'A3 Express CHA Clearing & Forwarding Fee', amount_lkr: 45000.0, is_billed_to_customer: true }
+    ],
+    total_disbursement_lkr: 133000.0,
+    agency_commission_lkr: 45000.0,
+    sscl_tax_lkr: 1125.0, // 2.5% on agency fee
+    vat_tax_lkr: 8100.0, // 18% on agency fee
+    grand_total_lkr: 187225.0,
+    payment_status: 'PARTIALLY_SETTLED',
+    settled_date: '2026-09-22'
+  }
+];
+
+// ── Initial Seed Demurrage Clocks ───────────────────────────────────────────
+export const INITIAL_DEMURRAGE_CLOCKS: DemurrageClock[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    container_no: 'MSKU-7291048',
+    arrival_date: '2026-09-22',
+    free_days_allowed: 5,
+    free_days_expiry_date: '2026-09-27',
+    status: 'SAFE',
+    days_remaining: 5,
+    penalty_per_day_usd: 85.0,
+    accrued_demurrage_usd: 0.0,
+    accrued_demurrage_lkr: 0.0
+  },
+  {
+    id: 2,
+    shipment_id: 2,
+    shipment_no: 'AEC/1002/2026-27',
+    container_no: 'TGHU-8192031',
+    arrival_date: '2026-09-27',
+    free_days_allowed: 5,
+    free_days_expiry_date: '2026-10-02',
+    status: 'SAFE',
+    days_remaining: 5,
+    penalty_per_day_usd: 60.0,
+    accrued_demurrage_usd: 0.0,
+    accrued_demurrage_lkr: 0.0
+  }
+];
+
+// ── Initial Seed Vault Documents ────────────────────────────────────────────
+export const INITIAL_VAULT_DOCUMENTS: VaultDocument[] = [
+  {
+    id: 1,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    category: 'COMMERCIAL',
+    doc_title: 'Indian Commercial Invoice - Krishna Agro Exports',
+    file_name: 'INV-IND-KRISHNA-2026-088.pdf',
+    file_size_kb: 482,
+    mime_type: 'application/pdf',
+    uploaded_at: '2026-09-17T11:00:00Z',
+    uploaded_by: 'Vigneshwaran Ram',
+    is_verified: true,
+    verified_by: 'Nimali Fernando',
+    tags: ['Invoice', 'INR', 'Origin India']
+  },
+  {
+    id: 2,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    category: 'TRANSPORT',
+    doc_title: 'Master Bill of Lading (Maersk Line)',
+    file_name: 'MBL-MAEU-291048820.pdf',
+    file_size_kb: 615,
+    mime_type: 'application/pdf',
+    uploaded_at: '2026-09-18T16:30:00Z',
+    uploaded_by: 'Kasun Jayawardena',
+    is_verified: true,
+    verified_by: 'Kasun Jayawardena',
+    tags: ['Bill of Lading', 'Ocean Freight', 'Maersk']
+  },
+  {
+    id: 3,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    category: 'CUSTOMS_REGULATORY',
+    doc_title: 'Sri Lanka Customs CUSDEC Entry C-2026/89412',
+    file_name: 'CUSDEC-C2026-89412-WARRANT.pdf',
+    file_size_kb: 890,
+    mime_type: 'application/pdf',
+    uploaded_at: '2026-09-21T09:15:00Z',
+    uploaded_by: 'Rohan Perera',
+    is_verified: true,
+    verified_by: 'Rohan Perera',
+    tags: ['CUSDEC', 'Customs Long Room', 'Yellow Channel']
+  },
+  {
+    id: 4,
+    shipment_id: 1,
+    shipment_no: 'AEC/1001/2026-27',
+    category: 'BANKING_FINANCE',
+    doc_title: 'Colombo Bank Invoice (BOC Trade Branch)',
+    file_name: 'COLOMBO-BANK-INV-AEC1001.pdf',
+    file_size_kb: 340,
+    mime_type: 'application/pdf',
+    uploaded_at: '2026-09-21T14:20:00Z',
+    uploaded_by: 'Nimali Fernando',
+    is_verified: true,
+    verified_by: 'Ananda Senanayake',
+    tags: ['Bank Invoice', 'LC / TT', 'BOC']
+  }
+];
+
+// ── Initial Seed Freight Rate Cards ─────────────────────────────────────────
+export const INITIAL_RATE_CARDS: FreightRateCard[] = [
+  {
+    id: 1,
+    origin_port: 'Tuticorin Port (IN TUC)',
+    destination_port: 'Colombo Port (LK CMB)',
+    carrier: 'Maersk Line / Feeder Express',
+    container_20ft_usd: 320.0,
+    container_40ft_hc_usd: 540.0,
+    lcl_per_cbm_usd: 24.0,
+    transit_days: 1,
+    effective_date: '2026-09-01',
+    valid_until: '2026-10-31'
+  },
+  {
+    id: 2,
+    origin_port: 'Chennai Port (IN MAA)',
+    destination_port: 'Colombo Port (LK CMB)',
+    carrier: 'Bengal Tiger Line (BTL)',
+    container_20ft_usd: 410.0,
+    container_40ft_hc_usd: 680.0,
+    lcl_per_cbm_usd: 28.0,
+    transit_days: 2,
+    effective_date: '2026-09-01',
+    valid_until: '2026-10-31'
+  },
+  {
+    id: 3,
+    origin_port: 'Cochin Port (IN COK)',
+    destination_port: 'Colombo Port (LK CMB)',
+    carrier: 'MSC Mediterranean Shipping',
+    container_20ft_usd: 350.0,
+    container_40ft_hc_usd: 590.0,
+    lcl_per_cbm_usd: 25.0,
+    transit_days: 1,
+    effective_date: '2026-09-01',
+    valid_until: '2026-10-31'
+  },
+  {
+    id: 4,
+    origin_port: 'Nhava Sheva (IN NSA)',
+    destination_port: 'Colombo Port (LK CMB)',
+    carrier: 'CMA CGM Line',
+    container_20ft_usd: 620.0,
+    container_40ft_hc_usd: 980.0,
+    lcl_per_cbm_usd: 36.0,
+    transit_days: 4,
+    effective_date: '2026-09-01',
+    valid_until: '2026-10-31'
+  }
+];
+
+export class MockDataStore {
   static getChapters(): Chapter[] {
     return getStored<Chapter[]>(STORAGE_KEYS.CHAPTERS, INITIAL_CHAPTERS);
   }
@@ -1346,6 +1688,63 @@ export class MockStorage {
     setStored(STORAGE_KEYS.QUOTATION_HISTORY, val);
   }
 
+  // ── New Module Stores ──────────────────────────────────────────────────────
+  static getContainers(): ContainerTrackingRecord[] {
+    return getStored<ContainerTrackingRecord[]>(STORAGE_KEYS.CONTAINERS, INITIAL_CONTAINERS);
+  }
+  static setContainers(val: ContainerTrackingRecord[]) {
+    setStored(STORAGE_KEYS.CONTAINERS, val);
+  }
+
+  static getCusdec(): CusdecDeclaration[] {
+    return getStored<CusdecDeclaration[]>(STORAGE_KEYS.CUSDEC, INITIAL_CUSDEC);
+  }
+  static setCusdec(val: CusdecDeclaration[]) {
+    setStored(STORAGE_KEYS.CUSDEC, val);
+  }
+
+  static getSlsi(): SlsiInspection[] {
+    return getStored<SlsiInspection[]>(STORAGE_KEYS.SLSI, INITIAL_SLSI);
+  }
+  static setSlsi(val: SlsiInspection[]) {
+    setStored(STORAGE_KEYS.SLSI, val);
+  }
+
+  static getQuarantine(): QuarantineRecord[] {
+    return getStored<QuarantineRecord[]>(STORAGE_KEYS.QUARANTINE, INITIAL_QUARANTINE);
+  }
+  static setQuarantine(val: QuarantineRecord[]) {
+    setStored(STORAGE_KEYS.QUARANTINE, val);
+  }
+
+  static getPortDisbursements(): PortDisbursementAccount[] {
+    return getStored<PortDisbursementAccount[]>(STORAGE_KEYS.PORT_DISBURSEMENTS, INITIAL_PORT_DISBURSEMENTS);
+  }
+  static setPortDisbursements(val: PortDisbursementAccount[]) {
+    setStored(STORAGE_KEYS.PORT_DISBURSEMENTS, val);
+  }
+
+  static getDemurrageClocks(): DemurrageClock[] {
+    return getStored<DemurrageClock[]>(STORAGE_KEYS.DEMURRAGE_CLOCKS, INITIAL_DEMURRAGE_CLOCKS);
+  }
+  static setDemurrageClocks(val: DemurrageClock[]) {
+    setStored(STORAGE_KEYS.DEMURRAGE_CLOCKS, val);
+  }
+
+  static getVaultDocuments(): VaultDocument[] {
+    return getStored<VaultDocument[]>(STORAGE_KEYS.VAULT_DOCUMENTS, INITIAL_VAULT_DOCUMENTS);
+  }
+  static setVaultDocuments(val: VaultDocument[]) {
+    setStored(STORAGE_KEYS.VAULT_DOCUMENTS, val);
+  }
+
+  static getRateCards(): FreightRateCard[] {
+    return getStored<FreightRateCard[]>(STORAGE_KEYS.RATE_CARDS, INITIAL_RATE_CARDS);
+  }
+  static setRateCards(val: FreightRateCard[]) {
+    setStored(STORAGE_KEYS.RATE_CARDS, val);
+  }
+
   static resetToDefaults() {
     localStorage.removeItem(STORAGE_KEYS.CHAPTERS);
     localStorage.removeItem(STORAGE_KEYS.TARIFF_LINES);
@@ -1359,6 +1758,14 @@ export class MockStorage {
     localStorage.removeItem(STORAGE_KEYS.PACKING_LISTS);
     localStorage.removeItem(STORAGE_KEYS.QUOTATION_HISTORY);
     localStorage.removeItem(STORAGE_KEYS.NEXT_SHIPMENT_SEQ);
+    localStorage.removeItem(STORAGE_KEYS.CONTAINERS);
+    localStorage.removeItem(STORAGE_KEYS.CUSDEC);
+    localStorage.removeItem(STORAGE_KEYS.SLSI);
+    localStorage.removeItem(STORAGE_KEYS.QUARANTINE);
+    localStorage.removeItem(STORAGE_KEYS.PORT_DISBURSEMENTS);
+    localStorage.removeItem(STORAGE_KEYS.DEMURRAGE_CLOCKS);
+    localStorage.removeItem(STORAGE_KEYS.VAULT_DOCUMENTS);
+    localStorage.removeItem(STORAGE_KEYS.RATE_CARDS);
 
     setStored(STORAGE_KEYS.CHAPTERS, INITIAL_CHAPTERS);
     setStored(STORAGE_KEYS.TARIFF_LINES, INITIAL_TARIFF_LINES);
@@ -1367,5 +1774,16 @@ export class MockStorage {
     setStored(STORAGE_KEYS.VENDORS, INITIAL_VENDORS);
     setStored(STORAGE_KEYS.SHIPMENTS, INITIAL_SHIPMENTS);
     setStored(STORAGE_KEYS.IMPORT_LOGS, INITIAL_IMPORT_LOGS);
+    setStored(STORAGE_KEYS.CONTAINERS, INITIAL_CONTAINERS);
+    setStored(STORAGE_KEYS.CUSDEC, INITIAL_CUSDEC);
+    setStored(STORAGE_KEYS.SLSI, INITIAL_SLSI);
+    setStored(STORAGE_KEYS.QUARANTINE, INITIAL_QUARANTINE);
+    setStored(STORAGE_KEYS.PORT_DISBURSEMENTS, INITIAL_PORT_DISBURSEMENTS);
+    setStored(STORAGE_KEYS.DEMURRAGE_CLOCKS, INITIAL_DEMURRAGE_CLOCKS);
+    setStored(STORAGE_KEYS.VAULT_DOCUMENTS, INITIAL_VAULT_DOCUMENTS);
+    setStored(STORAGE_KEYS.RATE_CARDS, INITIAL_RATE_CARDS);
   }
 }
+
+export { MockDataStore as MockStorage };
+

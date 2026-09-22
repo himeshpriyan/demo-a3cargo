@@ -22,6 +22,17 @@ import type {
   ShipmentVendorProformaItem,
   PreliminaryQuotationItem,
   QuotationHistoryLog,
+  ContainerTrackingRecord,
+  MaritimeMilestoneStatus,
+  CusdecDeclaration,
+  CustomsChannel,
+  SlsiInspection,
+  QuarantineRecord,
+  PortDisbursementAccount,
+  DemurrageClock,
+  VaultDocument,
+  FreightRateCard,
+  LandingCostSimulation,
 } from '../types';
 
 // Helper for parsing rates like '15%', 'Free', 'Rs. 50/kg'
@@ -1538,6 +1549,309 @@ export const mockService = {
       total_cost_lkr: Math.round(estimatedCost * 100) / 100,
       suggested_price_lkr: Math.round(suggestedPrice * 100) / 100,
       currency_conversion: { usd_rate: usdRate, lkr_inr_rate: lkrInrRate },
+    };
+  },
+
+  // ── MODULE 2: Container Tracking & Logistics ───────────────────────────────
+  getContainers: async (): Promise<ContainerTrackingRecord[]> => {
+    return MockStorage.getContainers();
+  },
+
+  getContainerById: async (id: number): Promise<ContainerTrackingRecord | null> => {
+    const list = MockStorage.getContainers();
+    return list.find(c => c.id === Number(id)) || null;
+  },
+
+  getContainerByShipmentId: async (shipmentId: number): Promise<ContainerTrackingRecord | null> => {
+    const list = MockStorage.getContainers();
+    return list.find(c => c.shipment_id === Number(shipmentId)) || null;
+  },
+
+  updateContainerMilestone: async (
+    containerId: number,
+    milestone: MaritimeMilestoneStatus,
+    notes?: string
+  ): Promise<ContainerTrackingRecord> => {
+    const list = MockStorage.getContainers();
+    const idx = list.findIndex(c => c.id === Number(containerId));
+    if (idx === -1) throw new Error(`Container ${containerId} not found`);
+
+    list[idx].current_milestone = milestone;
+    list[idx].updated_at = new Date().toISOString();
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    let foundCurrent = false;
+
+    list[idx].milestones = list[idx].milestones.map(m => {
+      if (m.step === milestone) {
+        foundCurrent = true;
+        return { ...m, is_completed: true, actual_date: todayStr, notes: notes || m.notes };
+      }
+      if (!foundCurrent) {
+        return { ...m, is_completed: true, actual_date: m.actual_date || todayStr };
+      }
+      return m;
+    });
+
+    MockStorage.setContainers(list);
+    return list[idx];
+  },
+
+  saveContainer: async (record: Partial<ContainerTrackingRecord>): Promise<ContainerTrackingRecord> => {
+    const list = MockStorage.getContainers();
+    if (record.id) {
+      const idx = list.findIndex(c => c.id === record.id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...record, updated_at: new Date().toISOString() };
+        MockStorage.setContainers(list);
+        return list[idx];
+      }
+    }
+
+    const newId = list.length > 0 ? Math.max(...list.map(c => c.id)) + 1 : 1;
+    const newRecord: ContainerTrackingRecord = {
+      id: newId,
+      shipment_id: record.shipment_id || 1,
+      shipment_no: record.shipment_no || 'AEC/1001/2026-27',
+      container_no: record.container_no || `MSKU-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      container_size: record.container_size || '40FT_HC',
+      seal_no: record.seal_no || `SL-CUS-${Math.floor(100000 + Math.random() * 900000)}`,
+      carrier_name: record.carrier_name || 'Maersk Line',
+      vessel_name: record.vessel_name || 'MV TIGER CORAL',
+      voyage_no: record.voyage_no || 'V.2604S',
+      master_bl_no: record.master_bl_no || `MAEU${Math.floor(10000000 + Math.random() * 90000000)}`,
+      house_bl_no: record.house_bl_no || `A3-HBL-CMB-00${newId}`,
+      port_of_loading: record.port_of_loading || 'Tuticorin Port (IN TUC)',
+      port_of_discharge: record.port_of_discharge || 'Colombo Port (LK CMB)',
+      etd: record.etd || new Date().toISOString(),
+      eta: record.eta || new Date(Date.now() + 4 * 86400000).toISOString(),
+      berth_terminal: record.berth_terminal || 'SAGT Terminal',
+      current_milestone: record.current_milestone || 'BOOKED',
+      gross_weight_kg: record.gross_weight_kg || 22000,
+      cbm_volume: record.cbm_volume || 58.0,
+      milestones: record.milestones || [],
+      updated_at: new Date().toISOString(),
+    };
+
+    list.unshift(newRecord);
+    MockStorage.setContainers(list);
+    return newRecord;
+  },
+
+  // ── MODULE 3: Sri Lanka Customs Regulatory Desk ─────────────────────────────
+  getCusdecDeclarations: async (): Promise<CusdecDeclaration[]> => {
+    return MockStorage.getCusdec();
+  },
+
+  updateCusdecChannel: async (id: number, channel: CustomsChannel, notes?: string): Promise<CusdecDeclaration> => {
+    const list = MockStorage.getCusdec();
+    const idx = list.findIndex(item => item.id === Number(id));
+    if (idx === -1) throw new Error(`Cusdec ${id} not found`);
+
+    list[idx].channel = channel;
+    if (notes) list[idx].notes = notes;
+    list[idx].updated_at = new Date().toISOString();
+    MockStorage.setCusdec(list);
+    return list[idx];
+  },
+
+  getSlsiInspections: async (): Promise<SlsiInspection[]> => {
+    return MockStorage.getSlsi();
+  },
+
+  updateSlsiStatus: async (id: number, status: any, permitNo?: string): Promise<SlsiInspection> => {
+    const list = MockStorage.getSlsi();
+    const idx = list.findIndex(item => item.id === Number(id));
+    if (idx === -1) throw new Error(`SLSI inspection ${id} not found`);
+
+    list[idx].lab_test_status = status;
+    if (permitNo) list[idx].permit_no = permitNo;
+    if (status === 'STANDARDS_CONFORMED') {
+      list[idx].clearance_date = new Date().toISOString().split('T')[0];
+    }
+    MockStorage.setSlsi(list);
+    return list[idx];
+  },
+
+  getQuarantineRecords: async (): Promise<QuarantineRecord[]> => {
+    return MockStorage.getQuarantine();
+  },
+
+  updateQuarantineStatus: async (id: number, status: any, orderNo?: string): Promise<QuarantineRecord> => {
+    const list = MockStorage.getQuarantine();
+    const idx = list.findIndex(item => item.id === Number(id));
+    if (idx === -1) throw new Error(`Quarantine record ${id} not found`);
+
+    list[idx].inspection_status = status;
+    if (orderNo) list[idx].release_order_no = orderNo;
+    MockStorage.setQuarantine(list);
+    return list[idx];
+  },
+
+  // ── MODULE 4: Port Disbursement & Demurrage ─────────────────────────────────
+  getPortDisbursements: async (): Promise<PortDisbursementAccount[]> => {
+    return MockStorage.getPortDisbursements();
+  },
+
+  savePortDisbursement: async (record: PortDisbursementAccount): Promise<PortDisbursementAccount> => {
+    const list = MockStorage.getPortDisbursements();
+    const idx = list.findIndex(p => p.id === record.id);
+    if (idx !== -1) {
+      list[idx] = record;
+      MockStorage.setPortDisbursements(list);
+      return record;
+    }
+    list.unshift(record);
+    MockStorage.setPortDisbursements(list);
+    return record;
+  },
+
+  getDemurrageClocks: async (): Promise<DemurrageClock[]> => {
+    const clocks = MockStorage.getDemurrageClocks();
+    const now = new Date();
+
+    return clocks.map(c => {
+      const expDate = new Date(c.free_days_expiry_date);
+      const diffMs = expDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      let status: 'SAFE' | 'WARNING' | 'OVERDUE' = 'SAFE';
+      let overdueDays = 0;
+
+      if (diffDays <= 0) {
+        status = 'OVERDUE';
+        overdueDays = Math.abs(diffDays);
+      } else if (diffDays <= 2) {
+        status = 'WARNING';
+      }
+
+      const accruedUsd = overdueDays * c.penalty_per_day_usd;
+      const accruedLkr = accruedUsd * 305.0;
+
+      return {
+        ...c,
+        days_remaining: diffDays,
+        status,
+        accrued_demurrage_usd: accruedUsd,
+        accrued_demurrage_lkr: accruedLkr,
+      };
+    });
+  },
+
+  // ── MODULE 5: Centralized Document E-Vault ──────────────────────────────────
+  getVaultDocuments: async (shipmentId?: number): Promise<VaultDocument[]> => {
+    const docs = MockStorage.getVaultDocuments();
+    if (shipmentId) {
+      return docs.filter(d => d.shipment_id === Number(shipmentId));
+    }
+    return docs;
+  },
+
+  uploadVaultDocument: async (doc: Partial<VaultDocument>): Promise<VaultDocument> => {
+    const docs = MockStorage.getVaultDocuments();
+    const newId = docs.length > 0 ? Math.max(...docs.map(d => d.id)) + 1 : 1;
+
+    const newDoc: VaultDocument = {
+      id: newId,
+      shipment_id: doc.shipment_id || 1,
+      shipment_no: doc.shipment_no || 'AEC/1001/2026-27',
+      category: doc.category || 'COMMERCIAL',
+      doc_title: doc.doc_title || 'Commercial Document',
+      file_name: doc.file_name || `DOC-${Date.now()}.pdf`,
+      file_size_kb: doc.file_size_kb || Math.floor(200 + Math.random() * 800),
+      mime_type: doc.mime_type || 'application/pdf',
+      uploaded_at: new Date().toISOString(),
+      uploaded_by: doc.uploaded_by || 'Operations Team',
+      is_verified: false,
+      tags: doc.tags || ['Customs', 'Export'],
+    };
+
+    docs.unshift(newDoc);
+    MockStorage.setVaultDocuments(docs);
+    return newDoc;
+  },
+
+  verifyVaultDocument: async (id: number, verifierName: string): Promise<VaultDocument> => {
+    const docs = MockStorage.getVaultDocuments();
+    const idx = docs.findIndex(d => d.id === Number(id));
+    if (idx === -1) throw new Error(`Document ${id} not found`);
+
+    docs[idx].is_verified = true;
+    docs[idx].verified_by = verifierName;
+    MockStorage.setVaultDocuments(docs);
+    return docs[idx];
+  },
+
+  deleteVaultDocument: async (id: number): Promise<boolean> => {
+    let docs = MockStorage.getVaultDocuments();
+    docs = docs.filter(d => d.id !== Number(id));
+    MockStorage.setVaultDocuments(docs);
+    return true;
+  },
+
+  // ── MODULE 6: Freight Rate Card & Landing Cost Estimator ────────────────────
+  getRateCards: async (): Promise<FreightRateCard[]> => {
+    return MockStorage.getRateCards();
+  },
+
+  simulateLandingCost: async (req: {
+    product_name: string;
+    hs_code: string;
+    origin_port: string;
+    weight_kg: number;
+    quantity: number;
+    buy_price_inr: number;
+    cbm: number;
+    usd_rate?: number;
+    lkr_inr_rate?: number;
+    target_margin_pct?: number;
+  }): Promise<LandingCostSimulation> => {
+    const usdRate = req.usd_rate || 305.0;
+    const lkrInrRate = req.lkr_inr_rate || 3.65;
+    const targetMargin = req.target_margin_pct || 15.0;
+
+    const rateCards = MockStorage.getRateCards();
+    const matchedCard = rateCards.find(r => r.origin_port.includes(req.origin_port)) || rateCards[0];
+
+    const oceanFreightUsd = (req.cbm || 1.0) * (matchedCard ? matchedCard.lcl_per_cbm_usd : 25.0);
+    const oceanFreightLkr = oceanFreightUsd * usdRate;
+
+    const baseCostInr = (Number(req.buy_price_inr) || 100) * (Number(req.quantity) || 1);
+    const baseCostLkr = baseCostInr / lkrInrRate;
+
+    const cifLkr = baseCostLkr + oceanFreightLkr;
+
+    // Approximate duty estimation for food/general imports (Gen Duty 15% + VAT 18% + PAL 10% + SSCL 2.5%)
+    const dutyRatePct = 45.5;
+    const customsDutyLkr = cifLkr * (dutyRatePct / 100);
+
+    // Port handling (Wharfage + THC + Gate Pass)
+    const portChargesLkr = Math.max(12500, (Number(req.weight_kg) || 100) * 8.5);
+
+    const totalLandingCostLkr = cifLkr + customsDutyLkr + portChargesLkr;
+    const totalWeightKg = Number(req.weight_kg) > 0 ? Number(req.weight_kg) : 1;
+    const costPerKgLkr = totalLandingCostLkr / totalWeightKg;
+
+    // Margin calculation
+    const recommendedSellingPriceLkr = totalLandingCostLkr / (1 - (targetMargin / 100));
+
+    return {
+      product_name: req.product_name,
+      hs_code: req.hs_code,
+      origin_port: req.origin_port,
+      weight_kg: totalWeightKg,
+      quantity: req.quantity,
+      buy_price_inr: req.buy_price_inr,
+      cbm: req.cbm,
+      exchange_usd_lkr: usdRate,
+      exchange_lkr_inr: lkrInrRate,
+      total_cif_lkr: Math.round(cifLkr),
+      customs_duty_lkr: Math.round(customsDutyLkr),
+      port_charges_lkr: Math.round(portChargesLkr),
+      total_landing_cost_lkr: Math.round(totalLandingCostLkr),
+      cost_per_kg_lkr: Math.round(costPerKgLkr * 100) / 100,
+      recommended_selling_price_lkr: Math.round(recommendedSellingPriceLkr),
+      gross_margin_pct: targetMargin,
     };
   },
 };

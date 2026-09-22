@@ -402,3 +402,192 @@ export interface DashboardSummary {
   year_wise_summary: Record<string, any>;
 }
 
+// ── MODULE 2: Container Logistics & Vessel Tracking ─────────────────────────
+export type MaritimeMilestoneStatus =
+  | 'BOOKED'
+  | 'GATED_IN'
+  | 'SAILED_POL'
+  | 'IN_TRANSIT'
+  | 'ARRIVED_COLOMBO'
+  | 'BERTHED'
+  | 'CUSTOMS_EXAM'
+  | 'CLEARED'
+  | 'DESTUFFED'
+  | 'DELIVERED';
+
+export interface MilestoneEvent {
+  step: MaritimeMilestoneStatus;
+  label: string;
+  location: string;
+  planned_date: string;
+  actual_date?: string;
+  is_completed: boolean;
+  notes?: string;
+}
+
+export interface ContainerTrackingRecord {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  container_no: string;
+  container_size: '20FT_STD' | '40FT_HC' | '40FT_STD' | 'REEFER';
+  seal_no: string;
+  carrier_name: string; // e.g. 'Maersk Line', 'MSC', 'CMA CGM', 'Bengal Tiger Line'
+  vessel_name: string;
+  voyage_no: string;
+  master_bl_no: string;
+  house_bl_no: string;
+  port_of_loading: string; // e.g. 'Tuticorin Port (IN TUC)'
+  port_of_discharge: string; // e.g. 'Colombo Port (LK CMB)'
+  etd: string;
+  eta: string;
+  berth_terminal?: string; // e.g. 'SAGT' or 'JCT' or 'CICT'
+  current_milestone: MaritimeMilestoneStatus;
+  gross_weight_kg: number;
+  cbm_volume: number;
+  milestones: MilestoneEvent[];
+  updated_at: string;
+}
+
+// ── MODULE 3: Sri Lanka Customs Regulatory Desk ─────────────────────────────
+export type CustomsChannel = 'GREEN' | 'YELLOW' | 'RED';
+export type RegulatoryStatus = 'PENDING' | 'IN_PROGRESS' | 'CLEARED' | 'REJECTED' | 'EXEMPT';
+
+export interface CusdecDeclaration {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  cusdec_office_code: string; // 'CMB-HQ'
+  declaration_no: string; // e.g. 'C-2026/89412'
+  assessment_notice_no: string;
+  manifest_no: string;
+  cpc_code: string; // '4000 (Home Consumption)'
+  importer_tin_vat: string;
+  declarant_cha_license: string;
+  channel: CustomsChannel;
+  assessed_duty_lkr: number;
+  duty_payment_receipt_no?: string;
+  duty_paid_date?: string;
+  is_warranted: boolean;
+  notes?: string;
+  updated_at: string;
+}
+
+export interface SlsiInspection {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  sample_drawn_date?: string;
+  slsi_file_ref: string;
+  product_name: string;
+  standards_specification: string; // e.g. 'SLS 102 (Ghee)'
+  lab_test_status: 'SAMPLE_COLLECTED' | 'TESTING_IN_LAB' | 'STANDARDS_CONFORMED' | 'REJECTED';
+  permit_no?: string;
+  clearance_date?: string;
+}
+
+export interface QuarantineRecord {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  phyto_certificate_no: string;
+  fumigation_cert_date: string;
+  npqs_officer_name?: string;
+  inspection_status: RegulatoryStatus;
+  release_order_no?: string;
+}
+
+// ── MODULE 4: Port Disbursement Account & Demurrage Clock ───────────────────
+export interface PortDisbursementItem {
+  id: number;
+  category: 'WHARFAGE' | 'THC' | 'STEVEDORING' | 'GATE_PASS' | 'EDI_ENTRY' | 'AGENCY_FEE';
+  description: string;
+  amount_lkr: number;
+  is_billed_to_customer: boolean;
+  receipt_ref?: string;
+}
+
+export interface PortDisbursementAccount {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  terminal_operator: 'SLPA' | 'SAGT' | 'CICT';
+  items: PortDisbursementItem[];
+  total_disbursement_lkr: number;
+  agency_commission_lkr: number;
+  sscl_tax_lkr: number;
+  vat_tax_lkr: number;
+  grand_total_lkr: number;
+  payment_status: 'UNPAID' | 'PARTIALLY_SETTLED' | 'SETTLED';
+  settled_date?: string;
+}
+
+export interface DemurrageClock {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  container_no: string;
+  arrival_date: string;
+  free_days_allowed: number;
+  free_days_expiry_date: string;
+  status: 'SAFE' | 'WARNING' | 'OVERDUE';
+  days_remaining: number;
+  penalty_per_day_usd: number;
+  accrued_demurrage_usd: number;
+  accrued_demurrage_lkr: number;
+}
+
+// ── MODULE 5: Centralized Document E-Vault ──────────────────────────────────
+export type DocumentCategory = 'COMMERCIAL' | 'TRANSPORT' | 'CUSTOMS_REGULATORY' | 'BANKING_FINANCE';
+
+export interface VaultDocument {
+  id: number;
+  shipment_id: number;
+  shipment_no: string;
+  category: DocumentCategory;
+  doc_title: string;
+  file_name: string;
+  file_size_kb: number;
+  mime_type: string;
+  uploaded_at: string;
+  uploaded_by: string;
+  is_verified: boolean;
+  verified_by?: string;
+  preview_url?: string;
+  tags: string[];
+}
+
+// ── MODULE 6: Freight Rate Card & Landing Cost ─────────────────────────────
+export interface FreightRateCard {
+  id: number;
+  origin_port: string;
+  destination_port: string;
+  carrier: string;
+  container_20ft_usd: number;
+  container_40ft_hc_usd: number;
+  lcl_per_cbm_usd: number;
+  transit_days: number;
+  effective_date: string;
+  valid_until: string;
+}
+
+export interface LandingCostSimulation {
+  product_name: string;
+  hs_code: string;
+  origin_port: string;
+  weight_kg: number;
+  quantity: number;
+  buy_price_inr: number;
+  cbm: number;
+  exchange_usd_lkr: number;
+  exchange_lkr_inr: number;
+  total_cif_lkr: number;
+  customs_duty_lkr: number;
+  port_charges_lkr: number;
+  total_landing_cost_lkr: number;
+  cost_per_kg_lkr: number;
+  recommended_selling_price_lkr: number;
+  gross_margin_pct: number;
+}
+
+

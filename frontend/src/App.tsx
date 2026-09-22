@@ -18,6 +18,12 @@ import { ShipmentDetailPage } from './pages/ShipmentDetailPage';
 import { CustomerMasterPage } from './pages/CustomerMasterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { VendorManagementPage } from './pages/VendorManagementPage';
+import { LogisticsTrackingPage } from './pages/LogisticsTrackingPage';
+import { RegulatoryDeskPage } from './pages/RegulatoryDeskPage';
+import { PortDisbursementPage } from './pages/PortDisbursementPage';
+import { DocumentVaultPage } from './pages/DocumentVaultPage';
+import { RateEstimatorPage } from './pages/RateEstimatorPage';
+import { AuthProvider } from './context/AuthContext';
 
 export function App() {
   // Active navigation tab
@@ -155,7 +161,8 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
+    <AuthProvider>
+      <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
       {/* Top Dropdown Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -195,6 +202,26 @@ export function App() {
 
         {activeTab === 'items' && (
           <ItemEntryPage />
+        )}
+
+        {activeTab === 'logistics' && (
+          <LogisticsTrackingPage />
+        )}
+
+        {activeTab === 'regulatory' && (
+          <RegulatoryDeskPage />
+        )}
+
+        {activeTab === 'disbursement' && (
+          <PortDisbursementPage />
+        )}
+
+        {activeTab === 'vault' && (
+          <DocumentVaultPage />
+        )}
+
+        {activeTab === 'rate_estimator' && (
+          <RateEstimatorPage />
         )}
 
         {activeTab === 'tariff' && (
@@ -381,6 +408,7 @@ export function App() {
         )}
       </main>
     </div>
+    </AuthProvider>
   );
 }
 
