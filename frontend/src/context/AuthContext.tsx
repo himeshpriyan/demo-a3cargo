@@ -16,12 +16,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY_AUTH = 'a3_is_authenticated_v1';
+const STORAGE_KEY_AUTH = 'a3_session_authenticated';
 const STORAGE_KEY_ROLE = 'a3_active_user_role';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Clear any legacy persistent authentication from localStorage so the demo login screen always displays first
+  if (typeof window !== 'undefined' && localStorage.getItem('a3_is_authenticated_v1')) {
+    localStorage.removeItem('a3_is_authenticated_v1');
+  }
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem(STORAGE_KEY_AUTH) === 'true';
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true';
   });
 
   const [currentRole, setCurrentRole] = useState<UserRole>(() => {
@@ -36,7 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCurrentRole(role);
       setIsAuthenticated(true);
       localStorage.setItem(STORAGE_KEY_ROLE, role);
-      localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+      sessionStorage.setItem(STORAGE_KEY_AUTH, 'true');
     }
   };
 
@@ -52,6 +58,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       'sales@a3cargo.lk': 'SALES_EXECUTIVE',
       'finance@a3cargo.lk': 'FINANCE_CONTROLLER',
       'warehouse@a3cargo.lk': 'WAREHOUSE_OFFICER',
+      'client@lankapremier.lk': 'CUSTOMER_CLIENT',
+      'customer@a3cargo.lk': 'CUSTOMER_CLIENT',
+      'client@a3cargo.lk': 'CUSTOMER_CLIENT',
+      'user@a3cargo.lk': 'CUSTOMER_CLIENT',
     };
 
     let targetRole: UserRole | null = aliasMap[cleanEmail] || null;
@@ -67,6 +77,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Default fallback to Super Admin if email includes admin or if password is demo123
     if (!targetRole && (cleanEmail.includes('admin') || cleanEmail === 'demo@a3cargo.com')) {
       targetRole = 'SUPER_ADMIN';
+    } else if (!targetRole && (cleanEmail.includes('client') || cleanEmail.includes('customer') || cleanEmail.includes('lanka') || cleanEmail.includes('user'))) {
+      targetRole = 'CUSTOMER_CLIENT';
     }
 
     if (!targetRole) {
@@ -82,6 +94,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setIsAuthenticated(false);
+    sessionStorage.removeItem(STORAGE_KEY_AUTH);
+    localStorage.removeItem('a3_is_authenticated_v1');
     localStorage.removeItem(STORAGE_KEY_AUTH);
   };
 

@@ -158,7 +158,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Right Column: 1-Click Demo Persona Grid (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-blue-400" />
@@ -168,19 +168,24 @@ export const LoginPage: React.FC = () => {
                   Select an identity to test field masking, quotation approvals, and departmental tabs:
                 </p>
               </div>
-              <span className="text-[11px] font-mono bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md border border-blue-500/20">
-                7 Personas Ready
+              <span className="text-[11px] font-mono bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-md border border-blue-500/20 shrink-0">
+                {Object.keys(allPersonas).length} Personas Ready
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[580px] overflow-y-auto pr-1">
               {(Object.keys(allPersonas) as UserRole[]).map(rKey => {
                 const persona = allPersonas[rKey];
+                const isClient = rKey === 'CUSTOMER_CLIENT';
                 return (
                   <div
                     key={rKey}
                     onClick={() => handleSelectDemoPersona(rKey)}
-                    className="group p-3.5 rounded-xl bg-[#0D2149]/70 hover:bg-[#132A5E] border border-slate-700/60 hover:border-[#4C9AFF] transition-all cursor-pointer shadow-lg hover:shadow-blue-500/10 flex flex-col justify-between text-left relative overflow-hidden"
+                    className={`group p-3.5 rounded-xl border transition-all cursor-pointer shadow-lg flex flex-col justify-between text-left relative overflow-hidden ${
+                      isClient
+                        ? 'bg-[#121E42]/80 hover:bg-[#1A2A5E] border-indigo-500/50 hover:border-indigo-400 hover:shadow-indigo-500/10'
+                        : 'bg-[#0D2149]/70 hover:bg-[#132A5E] border-slate-700/60 hover:border-[#4C9AFF] hover:shadow-blue-500/10'
+                    }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -189,8 +194,13 @@ export const LoginPage: React.FC = () => {
                             {persona.avatar}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-xs group-hover:text-[#4C9AFF] transition-colors">
-                              {persona.name}
+                            <div className="font-bold text-white text-xs group-hover:text-[#4C9AFF] transition-colors flex items-center gap-1.5">
+                              <span>{persona.name}</span>
+                              {isClient && (
+                                <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-1 py-0.2 rounded border border-indigo-500/30 font-mono">
+                                  Client
+                                </span>
+                              )}
                             </div>
                             <div className="text-[10px] text-slate-400">
                               {persona.role}
@@ -198,7 +208,7 @@ export const LoginPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <span className="text-[10px] font-bold text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-mono">
+                        <span className="text-[10px] font-bold text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-mono shrink-0">
                           Launch &rarr;
                         </span>
                       </div>
@@ -212,8 +222,8 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                      <span>{persona.email}</span>
-                      <span className="text-emerald-400 font-semibold">{persona.permissions.length} perms</span>
+                      <span className="truncate max-w-[180px]">{persona.email}</span>
+                      <span className="text-emerald-400 font-semibold shrink-0">{persona.permissions.length} perms</span>
                     </div>
                   </div>
                 );

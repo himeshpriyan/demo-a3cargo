@@ -5,7 +5,8 @@ export type UserRole =
   | 'PROCUREMENT_OFFICER'
   | 'SALES_EXECUTIVE'
   | 'FINANCE_CONTROLLER'
-  | 'WAREHOUSE_OFFICER';
+  | 'WAREHOUSE_OFFICER'
+  | 'CUSTOMER_CLIENT';
 
 export type Permission =
   | 'shipment:create'
@@ -169,6 +170,19 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
     permissions: [
       'warehouse:record_shortage',
       'logistics:manage_containers',
+      'documents:upload'
+    ]
+  },
+  CUSTOMER_CLIENT: {
+    id: 'user-client',
+    name: 'Kavinda Wickramasinghe',
+    email: 'kavinda.w@lankapremier.lk',
+    role: 'CUSTOMER_CLIENT',
+    title: 'Managing Importer (Lanka Premier Wholesale Ltd)',
+    avatar: 'KW',
+    badgeColor: 'bg-indigo-600 text-white',
+    description: 'External client & consignee perspective: Reviews quotation proposals, tracks active vessel containers, and downloads CUSDEC/Invoices. Raw supplier buy rates and internal corporate margins are securely restricted.',
+    permissions: [
       'documents:upload'
     ]
   }

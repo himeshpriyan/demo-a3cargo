@@ -18,7 +18,8 @@ import {
   FolderArchive,
   Calculator,
   UserCheck,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../types/auth';
@@ -310,6 +311,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <BarChart3 className="w-3.5 h-3.5 opacity-80" />
               <span>Analytics</span>
             </button>
+
+            {/* 8. DEMO LOGINS */}
+            <button
+              onClick={() => setActiveTab('demo_login')}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'demo_login'
+                  ? 'bg-[#172B4D] text-[#4C9AFF] ring-1 ring-[#4C9AFF]/40'
+                  : 'text-[#DEEBFF] hover:bg-[#172B4D]/60 hover:text-white'
+              }`}
+              title="Interactive Role Simulator & Demo Login Directory"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Demo Logins</span>
+              <span className="text-[9px] bg-blue-500/20 text-[#4C9AFF] border border-blue-400/30 px-1 py-0.2 rounded font-mono">
+                8 Roles
+              </span>
+            </button>
           </nav>
 
           {/* Atlassian Primary "+ Create" Button */}
@@ -395,6 +413,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="text-[10px] text-slate-400">{user.email}</div>
                   </div>
                 </div>
+
+                {/* Direct link to Demo Logins Page */}
+                <button
+                  onClick={() => handleMenuClick(() => setActiveTab('demo_login'))}
+                  className="w-full flex items-center justify-between p-2 rounded-lg bg-[#0C66E4]/20 hover:bg-[#0C66E4]/30 border border-[#4C9AFF]/30 text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Open Demo Logins Studio</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[#4C9AFF]">&rarr;</span>
+                </button>
 
                 {/* Role Switcher Section */}
                 <div>

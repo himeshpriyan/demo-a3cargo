@@ -34,6 +34,8 @@ export const toast = {
   }
 };
 
+export const showToast = (message: string, type: ToastType = 'info') => toast.show(message, type);
+
 // Override native window.alert to completely eliminate blocking browser alert boxes
 if (typeof window !== 'undefined') {
   window.alert = (msg: any) => {

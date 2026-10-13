@@ -24,6 +24,7 @@ import { PortDisbursementPage } from './pages/PortDisbursementPage';
 import { DocumentVaultPage } from './pages/DocumentVaultPage';
 import { RateEstimatorPage } from './pages/RateEstimatorPage';
 import { LoginPage } from './pages/LoginPage';
+import { DemoLoginPage } from './pages/DemoLoginPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function MainPortal() {
@@ -227,6 +228,10 @@ function MainPortal() {
 
         {activeTab === 'rate_estimator' && (
           <RateEstimatorPage />
+        )}
+
+        {activeTab === 'demo_login' && (
+          <DemoLoginPage onSelectTab={setActiveTab} />
         )}
 
         {activeTab === 'tariff' && (
